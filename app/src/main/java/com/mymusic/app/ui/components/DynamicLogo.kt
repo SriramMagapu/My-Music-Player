@@ -38,15 +38,22 @@ import com.mymusic.app.ui.theme.DeepNearBlack
 import com.mymusic.app.ui.theme.SurfaceDark
 import com.mymusic.app.ui.theme.SurfaceElevated
 
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.res.painterResource
+import com.mymusic.app.R
+
 /**
- * Dynamic App Logo centered around a user-customizable letter (default "M" or user initial)
- * with integrated sound wave visual elements.
+ * Dynamic App Logo showing either the official embossed 3D logo or a user's custom monogram
+ * with integrated sound wave visual elements and animated glow.
  */
 @Composable
 fun DynamicLogo(
     letter: String = "M",
     size: Dp = 56.dp,
     isPlaying: Boolean = false,
+    useOfficialLogo: Boolean = letter.trim().uppercase().let { it == "M" || it.isEmpty() },
     modifier: Modifier = Modifier
 ) {
     val displayLetter = letter.trim().take(1).uppercase().ifEmpty { "M" }
@@ -54,8 +61,8 @@ fun DynamicLogo(
 
     val infiniteTransition = rememberInfiniteTransition(label = "pulse")
     val glowAlpha by infiniteTransition.animateFloat(
-        initialValue = 0.3f,
-        targetValue = if (isPlaying) 0.8f else 0.4f,
+        initialValue = 0.35f,
+        targetValue = if (isPlaying) 0.85f else 0.5f,
         animationSpec = infiniteRepeatable(
             animation = tween(1500, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse
@@ -67,61 +74,63 @@ fun DynamicLogo(
         modifier = modifier
             .size(size)
             .shadow(
-                elevation = if (isPlaying) 8.dp else 4.dp,
-                shape = RoundedCornerShape(size * 0.28f),
+                elevation = if (isPlaying) 10.dp else 4.dp,
+                shape = CircleShape,
                 ambientColor = BrandGreenPrimary.copy(alpha = glowAlpha),
                 spotColor = BrandGreenPrimary.copy(alpha = glowAlpha)
             )
-            .clip(RoundedCornerShape(size * 0.28f))
-            .background(
-                Brush.radialGradient(
-                    colors = listOf(
-                        SurfaceElevated,
-                        SurfaceDark,
-                        DeepNearBlack
-                    )
-                )
-            )
+            .clip(CircleShape)
+            .background(DeepNearBlack)
             .border(
-                width = if (isLarge) 1.5.dp else 1.dp,
+                width = if (isLarge) 2.dp else 1.2.dp,
                 brush = Brush.linearGradient(
                     colors = listOf(
-                        BrandGreenPrimary.copy(alpha = 0.7f),
+                        BrandGreenPrimary.copy(alpha = if (isPlaying) 0.9f else 0.6f),
                         BrandGreenDarkContainer.copy(alpha = 0.4f)
                     )
                 ),
-                shape = RoundedCornerShape(size * 0.28f)
+                shape = CircleShape
             ),
         contentAlignment = Alignment.Center
     ) {
-        // Sound wave curves in the background
-        Canvas(modifier = Modifier.matchParentSize()) {
-            val w = this.size.width
-            val h = this.size.height
-            val barW = w * 0.06f
-            val spacing = w * 0.04f
-            val bars = listOf(0.35f, 0.65f, 0.90f, 0.50f, 0.75f)
+        if (useOfficialLogo) {
+            Image(
+                painter = painterResource(id = R.drawable.app_logo_circle),
+                contentDescription = "MY MUSIC Logo",
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(if (size < 40.dp) 0.dp else 2.dp)
+            )
+        } else {
+            // Sound wave curves in the background
+            Canvas(modifier = Modifier.matchParentSize()) {
+                val w = this.size.width
+                val h = this.size.height
+                val barW = w * 0.06f
+                val spacing = w * 0.04f
+                val bars = listOf(0.35f, 0.65f, 0.90f, 0.50f, 0.75f)
 
-            val startX = (w - (bars.size * (barW + spacing) - spacing)) / 2f
-            bars.forEachIndexed { i, factor ->
-                val barH = h * 0.25f * factor
-                drawRoundRect(
-                    color = BrandGreenPrimary.copy(alpha = 0.18f),
-                    topLeft = Offset(startX + i * (barW + spacing), h * 0.75f - barH),
-                    size = Size(barW, barH),
-                    cornerRadius = CornerRadius(barW / 2f, barW / 2f)
-                )
+                val startX = (w - (bars.size * (barW + spacing) - spacing)) / 2f
+                bars.forEachIndexed { i, factor ->
+                    val barH = h * 0.25f * factor
+                    drawRoundRect(
+                        color = BrandGreenPrimary.copy(alpha = 0.18f),
+                        topLeft = Offset(startX + i * (barW + spacing), h * 0.75f - barH),
+                        size = Size(barW, barH),
+                        cornerRadius = CornerRadius(barW / 2f, barW / 2f)
+                    )
+                }
             }
-        }
 
-        // Central Letter
-        Text(
-            text = displayLetter,
-            fontSize = (size.value * 0.52f).sp,
-            fontWeight = FontWeight.Black,
-            fontFamily = FontFamily.SansSerif,
-            color = BrandGreenPrimary,
-            letterSpacing = (-1).sp
-        )
+            // Central Letter
+            Text(
+                text = displayLetter,
+                fontSize = (size.value * 0.52f).sp,
+                fontWeight = FontWeight.Black,
+                fontFamily = FontFamily.SansSerif,
+                color = BrandGreenPrimary,
+                letterSpacing = (-1).sp
+            )
+        }
     }
 }
